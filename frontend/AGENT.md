@@ -7,7 +7,7 @@ template creator + editor opened by a share link. Backend/storage/deploy are out
 
 Event sites show partner logos in fixed-size cards. Incoming files carry huge white/transparent
 margins, so visible logo area differs card-to-card and cards look uneven. The service normalizes
-**placement of the visible logo part inside a preset plate (плашка)**, not the file size.
+**placement of the visible logo part inside a preset plate**, not the file size.
 Aspect ratio is always preserved: horizontal, square and wordmark logos stay as they are.
 
 Roles: **author** sets plate size, background, safe paddings, export format → gets a URL;
@@ -57,7 +57,7 @@ Editor:
 - Plate rendered at correct aspect ratio; safe-area outline visible only while editing (6.1).
 - SVG must render safely: sanitize with `dompurify` (strip scripts/event handlers/foreignObject)
   or rasterize; no script execution in the user's browser (6.3).
-- Add-ons from the TZ: deviation-from-center indicator, live safe-area warning, service lines never exported.
+- Deviation-from-center indicator and live safe-area warning; service lines never exported.
 
 ## Acceptance
 
@@ -80,12 +80,25 @@ Full acceptance walkthrough: create template → get link → open as submitter 
 margins → auto-trim or manual crop → review + apply frame → auto fit + center → adjust scale/position →
 download the exact-size file.
 
+## Routing (implemented)
+
+- `/` — template creator (`TemplateCreatePage`).
+- `/t/:templateId` — editor (`LogoEditorPage`); template params live in the query string, parsed by
+  `src/lib/templateParams.ts`, so the link format is frozen before the backend exists (AC-02).
+- `*` — not found.
+
+Link format: `/t/<templateId>?w=400&h=220&bg=%23FFFFFF&p=20&fmt=png` — `w`,`h` plate px;
+`bg` `#RGB`/`#RRGGBB` (default `#FFFFFF`); `p` uniform paddings or `pt`/`pr`/`pb`/`pl` per side;
+`fmt` `png|jpeg|webp`. Missing `w`/`h` fall back to the AC-01 demo plate (400×220, 20 px);
+malformed values render a readable error instead of crashing. Build hrefs with `buildEditorHref`
+(`src/lib/routes.ts`), never by string concatenation.
+
 ## Stack (present in package.json)
 
-- React 19 + TypeScript + Vite, SPA, no router yet.
+- React 19 + TypeScript + Vite; `react-router` 8 — `BrowserRouter` in `src/main.tsx`, route table in `src/App.tsx`.
 - Tailwind CSS 4 via `@tailwindcss/vite`; shadcn CLI (`components.json`, style `base-nova`) on top of
-  `@base-ui/react`; `class-variance-authority`, `cn` package for class merging; `lucide-react` icons;
-  `@fontsource-variable/geist`; `next-themes` for light/dark.
+  `@base-ui/react` (`src/components/ui/`); `class-variance-authority`; `cn` package for class merging;
+  `lucide-react` icons; `@fontsource-variable/geist`; `next-themes` for light/dark.
 - Editor: `konva` + `react-konva` + `use-image` (stage/layers, drag, hit detection, canvas export).
 - Crop frame: `react-easy-crop`.
 - SVG safety: `dompurify`.
@@ -98,10 +111,16 @@ Use Konva layers for the editor core and canvas/`toDataURL`/`toBlob` for export;
 ## Layout
 
 ```
-src/              app sources; only src/ is in tsconfig include — keep new code there
-public/           static assets
-@/components/ui/  shadcn output, currently outside include and broken (see Gaps)
+src/                    app sources; only src/ is in tsconfig include — keep new code there
+  components/layout/    header + base layout shell
+  components/ui/        shadcn components
+  lib/                  template params, routes
+  pages/                route screens
+public/                 static assets
 ```
+
+Base shell: sticky header + `<main>` workspace container, `min-w-[1280px]`, content max `1600px`
+(§8 TZ: desktop ≥1280 px, no mobile layout → horizontal scroll on narrower screens).
 
 ## Commands
 
@@ -111,33 +130,21 @@ npm install | npm run dev | npm run build | npm run preview | npm run lint | npm
 
 ## Conventions
 
-- UI copy and error messages: Russian. Code identifiers/comments: English, consistent per file.
+- UI copy and error messages: Russian. Code identifiers/comments: Russian is used today; keep it
+  consistent within a file.
 - Commits: Conventional Commits, scope `frontend`: `feat(frontend): …`.
 - Trace every behavior change to an `F-xx`/`AC-xx` id in code comments, tests and commit body.
 - Biome: tabs, double quotes, organize-imports on. Do not add file-level config overrides.
+- Import via the `@/` alias (configured in `vite.config.ts` + `tsconfig.app.json`), not `../../`.
 - Dependency-light: reuse the libraries above before adding new ones.
 - FileReader/`createImageBitmap` → `HTMLImageElement`/`HTMLCanvasElement`; revoke object URLs;
   handle huge uploads (guard dimensions) and `onerror` on decode.
 
 ## Gaps (verified 2026-10-04, branch `feat/13-frontend-framework`)
 
-1. `@/` alias is not configured: no `paths` in `tsconfig*.json`, no `resolve.alias` in `vite.config.ts`.
-   shadcn therefore wrote components into the literal `@/components/ui/` dir (button, dialog, input,
-   label, slider, sonner), and `@/components/ui/dialog.tsx:5` imports `@/components/ui/button` — an
-   unresolved specifier. `tsconfig.app.json` includes only `src`, so `tsc -b` passes (exit 0) and the
-   error stays hidden until the first import from `src`. Fix: add `paths` + `resolve.alias`, move dir
-   to `src/components/ui/`.
-2. `src/App.tsx` / `App.css` / `assets/*` are the stock Vite demo page; replace with the two screens.
-3. `tsconfig.app.json` has no `strict` — enable it before writing real logic.
-4. `index.html`: `lang="en"` and title `frontend` → `ru`, real title.
-5. No tests and no CI yet; `npm run lint` is the only gate.
-6. Template params have no source yet (no backend) — during development read them from the query
-   string behind a small adapter so the link format is fixed early (AC-02).
-
-## Non-goals
-
-- No AI/ML: auto-trim is plain image processing.
-- No mobile layout; target desktop ≥1280 px, current Chrome/Edge/Firefox.
-- No accounts, roles, admin panels — MVP is link-based.
-- Don't reimplement Konva drag/scale math by hand if a built-in does it; don't add a state manager
-  beyond zustand.
+1. `tsconfig.app.json` has no `strict` — enable it before writing real logic.
+2. No tests and no CI yet; `npm run lint` + `tsc -b` are the only gates.
+3. Template creation form (F-01…F-04) is a placeholder: the page only shows an example link built from
+   the AC-01 demo plate; nothing is persisted (no backend) and `templateId` is not yet resolved.
+4. Editor features F-05…F-19 are not implemented; `LogoEditorPage` renders params + an empty plate.
+5. `sonner`/`Toaster`, `slider`, `dialog`, `label` components exist but are unused so far.

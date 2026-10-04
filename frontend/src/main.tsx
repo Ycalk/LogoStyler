@@ -1,10 +1,18 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.tsx";
+import { BrowserRouter } from "react-router";
+import App from "@/App";
+import "@/index.css";
 
-createRoot(document.getElementById("root")!).render(
+const container = document.getElementById("root");
+if (container === null) {
+	throw new Error("не найден корневой элемент #root");
+}
+
+createRoot(container).render(
 	<StrictMode>
-		<App />
+		<BrowserRouter>
+			<App />
+		</BrowserRouter>
 	</StrictMode>,
 );
