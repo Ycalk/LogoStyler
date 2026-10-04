@@ -1,32 +1,50 @@
-# React + TypeScript + Vite
+# LogoStyler — frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Клиентская часть «Сервиса подготовки логотипов под единый стандарт размещения на сайте»:
+экран создания шаблона плашки и редактор, открываемый по ссылке (загрузка логотипа, обрезка,
+масштаб, перемещение, центрирование, предпросмотр, экспорт).
 
-Currently, two official plugins are available:
+## Зачем это нужно
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Карточки в разделах «Партнёры» и «Участники» имеют одинаковый контейнер, но присылаемые логотипы
+различаются по полям и качеству: если вокруг логотипа остаются большие белые или прозрачные поля,
+он занимает малую часть плашки и карточки выглядят неравномерно. **Ключевой принцип:** сервис
+стандартизирует не размер файла, а размещение *видимой части* логотипа внутри заданной плашки;
+пропорции при этом сохраняются.
 
-## React Compiler
+## Экраны
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Экран | Что делает |
+|---|---|
+| Создание шаблона | ширина и высота плашки, цвет фона (по умолчанию `#FFFFFF`), охранные отступы, формат экспорта, сохранение и уникальная ссылка |
+| Редактор по ссылке | загрузка SVG/PNG/JPG, ручная обрезка или «Автообрезка» с предложенной рамкой, вписывание и центрирование в охранной области, масштаб ползунком, перемещение с направляющими, предпросмотр и экспорт файла точного размера |
 
-## Expanding the Oxlint configuration
+Автообрезка по кнопке только *предлагает* рамку — применить, изменить или отменить её решает
+пользователь. Служебные элементы (охранная зона, рамка обрезки, направляющие, предупреждения)
+в экспортированный файл не попадают.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Стек
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+React 19, TypeScript, Vite, Tailwind CSS 4, shadcn на `@base-ui/react`, Konva + `react-konva` +
+`use-image` (сцена редактора и экспорт через Canvas), `react-easy-crop`, `dompurify` (безопасный SVG),
+Zustand (состояние редактора), Sonner (уведомления).
+
+Целевые браузеры — актуальные Chrome, Edge, Firefox на ПК, ширина экрана от 1280 px.
+Мобильная версия не требуется.
+
+## Команды
+
+```bash
+npm install        # зависимости
+npm run dev        # dev-сервер Vite
+npm run build      # tsc -b && vite build
+npm run preview    # предпросмотр собранного бандла
+npm run lint       # oxlint
+npm run format     # biome format ./src
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Текущее состояние
+
+Каталог на стадии каркаса: `src/App.tsx` — шаблонная страница Vite, подлежит замене; алиас `@/`
+не настроен, поэтому shadcn-компоненты лежат в `@/components/ui/` (раздел Gaps в [AGENT.md](AGENT.md)).
+Параметры шаблона на время разработки берутся из query-строки ссылки.
