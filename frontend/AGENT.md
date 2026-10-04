@@ -112,6 +112,7 @@ Use Konva layers for the editor core and canvas/`toDataURL`/`toBlob` for export;
 
 ```
 src/                    app sources; only src/ is in tsconfig include — keep new code there
+  components/common/    app-level UI kit: Panel, PageHeader, FormField, Hint, ErrorNotice
   components/layout/    header + base layout shell
   components/ui/        shadcn components
   lib/                  template params, routes
@@ -135,6 +136,9 @@ npm install | npm run dev | npm run build | npm run preview | npm run lint | npm
 - Commits: Conventional Commits, scope `frontend`: `feat(frontend): …`.
 - Trace every behavior change to an `F-xx`/`AC-xx` id in code comments, tests and commit body.
 - Biome: tabs, double quotes, organize-imports on. Do not add file-level config overrides.
+- App-level UI primitives live in `src/components/common/` (Panel, PageHeader, FormField, Hint,
+  ErrorNotice); screens in `src/pages/` only compose them and the shadcn components from
+  `src/components/ui/`.
 - Import via the `@/` alias (configured in `vite.config.ts` + `tsconfig.app.json`), not `../../`.
 - Dependency-light: reuse the libraries above before adding new ones.
 - FileReader/`createImageBitmap` → `HTMLImageElement`/`HTMLCanvasElement`; revoke object URLs;
@@ -144,7 +148,9 @@ npm install | npm run dev | npm run build | npm run preview | npm run lint | npm
 
 1. `tsconfig.app.json` has no `strict` — enable it before writing real logic.
 2. No tests and no CI yet; `npm run lint` + `tsc -b` are the only gates.
-3. Template creation form (F-01…F-04) is a placeholder: the page only shows an example link built from
-   the AC-01 demo plate; nothing is persisted (no backend) and `templateId` is not yet resolved.
-4. Editor features F-05…F-19 are not implemented; `LogoEditorPage` renders params + an empty plate.
-5. `sonner`/`Toaster`, `slider`, `dialog`, `label` components exist but are unused so far.
+3. Template creation form (F-01…F-04) is a stub: width/height/background/paddings/format fields render
+   uncontrolled with AC-01 defaults, the save button does nothing, nothing is persisted (no backend) and
+   `templateId` is not resolved yet. The example link is built from the AC-01 demo plate.
+4. Editor (F-05…F-19) is a stub: toolbar actions (upload, auto-trim, center, reset, export) are disabled,
+   the scale slider is inert, and the preview plate with the safe-area outline is drawn from link params only.
+5. `sonner`/`Toaster` and `dialog` components exist but are still unused.
